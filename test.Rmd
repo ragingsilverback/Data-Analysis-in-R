@@ -1,0 +1,121 @@
+---
+title: 'Some Random Exploratory Data Analysis on The NYC Flights Dataset'
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(nycflights13)
+library(tidyverse)
+library(lubridate)
+```
+
+
+## Question 1 
+Using the flights data frame discussed in the class, visualize the
+distribution of departure times
+(a). Across the year
+
+```{r q1a}
+
+flights_n <- flights %>%
+  filter(!is.na(dep_time)) %>%
+  select(year,month,day,hour,minute,carrier,dep_delay,arr_delay,distance) %>%
+  mutate(
+    dep_time = make_datetime(year,month,day,hour,minute)
+    
+  )
+flights_n %>%
+  ggplot(aes(dep_time)) +
+  #geom_smooth(mapping = aes(x = month,y = dep_time))
+  geom_freqpoly(binwidth = 86400)
+
+flights %>%
+  ggplot(aes(hour)) + 
+  geom_freqpoly(binwidth = 1)
+```
+Above Are Two Plots Showing Frequency Polygons
+(i) There are higher number of flights during August,September. There also sudden decrease in the freq of number of flights during mid of febuary and march. There
+(ii) Seconds Plot is the frequency polygon of No. of flights according to their their Hourly departure time across the whole year .telling us the total count of flights on  different hours throughout a day. we can see that the number start increasing from 5 and goes maximum no. flights at around the morning hour of 7-8 ,decreasing after that to a local minimum around the afternoon hours and then again rising to a maximum in the evening hours. 
+
+
+
+
+(b). During the Month December 2013
+
+```{r q1b}
+flights_n %>%
+  filter(year == 2013,month == 12) %>%
+  ggplot(aes(dep_time)) + 
+  geom_freqpoly(binwidth = 7200)
+
+flights %>%
+  filter(year == 2013,month == 12) %>%
+  ggplot(aes(hour)) + 
+  geom_freqpoly(binwidth = 1)
+
+```
+Above Are Two Plots Showing Frequency Polygons
+(i) First Plot is the fequency polygon of No. of flights according to their departure time across the month of december.
+(ii) Seconds Plot is the frequency polygon of No. of flights according to their their Hourly departure time .telling us the total count of flights on  different hours throughout a day in the month of december. we can see that this pattern is nearly identical to the yearly plot given above.
+
+
+(c) Within days December 31,2013 and January 01,2013
+```{r q1c}
+a <- filter(flights_n,year == 2013,month == 01,day == 01) 
+b <- filter(flights_n,year == 2013,month == 12,day == 31) 
+#full_join(a,b) %>%
+a %>%
+  ggplot(aes(dep_time)) + 
+  geom_freqpoly(binwidth = 600)
+b %>%
+  ggplot(aes(dep_time)) + 
+  geom_freqpoly(binwidth = 600)
+
+
+```
+
+(i) this graph is the for the month of January 2013 which shows that there lot of flights during the period of time between 6:00AM Morning to 21:00PM. In which there is a sudden increase in the number of flights during afternoon at around 12:00 Noon
+
+(ii) There are less number of flights during december in comparasion to January, as we can see that max. goes to aroud 21 in december and 24 in January and same here  during the period of time between 6:00AM Morning to 21:00PM. The increase in the number of flights is may be due to New year.
+
+## Question 2
+Using the R packages discussed in the class, explore the relationship
+between the distance and average delay for each carrier and a particular time
+period of the day (e.g. group observations according to hours of the day).
+
+```{r q2}
+#ggplot(data = flights_n)
+
+flights_g <- group_by(flights_n,carrier,hour)
+flight_m <- summarise(flights_g,avg_delay = mean(dep_delay,na.rm = TRUE) + mean(arr_delay,na.rm = TRUE))
+
+ggplot(data = flight_m) + 
+  geom_point(mapping = aes(x = hour,y = avg_delay,color = carrier),alpha = 2/3) + 
+  geom_smooth(mapping = aes(x = hour,y = avg_delay))
+
+flights_t <- group_by(flights_n,carrier,hour)
+flight_j <- summarise(flights_t,avg_delay = mean(dep_delay,na.rm = TRUE) + mean(arr_delay,na.rm = TRUE),avg_dist = mean(distance,na.rm = TRUE))
+  
+ggplot(data = flight_j) + 
+  geom_point(mapping = aes(x = avg_dist,y = avg_delay,color = carrier,size = hour)) + 
+  geom_smooth(mapping = aes(x = avg_dist,y = avg_delay))
+
+ggplot(data = flight_j) + 
+  geom_point(mapping = aes(x = avg_dist,y = avg_delay,color = carrier)) + 
+  geom_smooth(mapping = aes(x = avg_dist,y = avg_delay))
+
+
+
+```
+(i) its a graph between avg_delay and hour as we can see that at around 18:00 avg_delay is more than.It may be due to the time of dusk.
+
+(ii) As from the second graph we can see that, average delay is higher in short distance flights that is at around 500 miles but avg delay is much less for long distance Since the size of hour is not clear another plot has been plotted. Since there is a point which is having greatest avg_delay have the WN or YV carrier.
+
+(iii) Majority of carrier flights of EV, DL, F9 are having much higher avg_delays.
+
+
+
